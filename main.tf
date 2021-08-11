@@ -29,8 +29,24 @@ resource "aws_s3_bucket" "glue_bucket" {
   acl    = "private"
 }
 
+resource "aws_s3_bucket" "glue_script_bucket" {
+  bucket = "glue-scripts"
+  acl    = "private"
+}
+
+resource "aws_s3_bucket_object" "pyspark_script" {
+  bucket = aws_s3_bucket.glue_script_bucket.bucket
+  key    = "etl.py"
+  source = "${path.module}/etl.py"
+
+  # The filemd5() function is available in Terraform 0.11.12 and later
+  # For Terraform 0.11.11 and earlier, use the md5() function and the file() function:
+  # etag = "${md5(file("path/to/file"))}"
+  etag = filemd5("${path.module}/etl.py")
+}
+
 resource "aws_iam_role" "glue" {
-  name = "AWSGlueServiceRoleDefault"
+  name = "MyAWSGlueServiceRoleDefault"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -68,7 +84,8 @@ resource "aws_iam_role_policy" "my_s3_policy" {
         "s3:DeleteObject"
       ],
       "Resource": [
-        "${aws_s3_bucket.glue_bucket.arn}*"
+        "${aws_s3_bucket.glue_bucket.arn}*",
+        "${aws_s3_bucket.glue_script_bucket.arn}*"          
       ]
     },
     {
@@ -101,6 +118,15 @@ resource "aws_dynamodb_table" "test_table" {
   }
 }
 
+resource "aws_glue_job" "glue_job" {
+ command {
+   script_location = "s3://${aws_s3_bucket.glue_script_bucket.bucket}/${aws_s3_bucket_object.pyspark_script.id}"
+   python_version = 3 
+ }
+ glue_version = "2.0"
+ name = "python-job-cli"
+ role_arn = aws_iam_role.glue.arn
+}
 
 module "glue_catalog_tables" {
   source = "./tables"
