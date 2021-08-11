@@ -28,7 +28,7 @@ datasource0 = glueContext.create_dynamic_frame.from_options(connection_type="dyn
 
 datasource0 = DropFields.apply( frame = datasource0, paths = ["lastDT#Seq"], transformation_ctx = "dropfields")
 datasource0.printSchema()
-column_mapping = [("timestamp","int","timestamp","int"),("field_a","string","field_b","string")]
+column_mapping = [("timestamp","long","timestamp","long"),("field_a","string","field_b","string")]
 
 datasource0 = ApplyMapping.apply(frame = datasource0, mappings = column_mapping, transformation_ctx="applymapping1")
 datasource0 = ResolveChoice.apply(frame = datasource0, choice = "make_struct", transformation_ctx = "resolvechoice4")
