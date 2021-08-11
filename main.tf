@@ -121,8 +121,12 @@ resource "aws_dynamodb_table" "test_table" {
 resource "aws_glue_job" "glue_job" {
  command {
    script_location = "s3://${aws_s3_bucket.glue_script_bucket.bucket}/${aws_s3_bucket_object.pyspark_script.id}"
-   python_version = 3 
+   python_version = 3
+   name = "pythonshell"
  }
+  default_arguments = {
+    "--job-language" = "python"
+  }
  glue_version = "2.0"
  name = "python-job-cli"
  role_arn = aws_iam_role.glue.arn
